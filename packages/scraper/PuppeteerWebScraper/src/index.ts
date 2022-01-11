@@ -1,5 +1,6 @@
 import { testClass } from "./testclass.js"; // NOTE the extension - needed for ES6
 import { Page} from "./page.js";
+import { Compare } from "./compare.js";
 import puppeteer from 'puppeteer';
 import fs from "fs";
 
@@ -26,6 +27,8 @@ async function Main() {
 
     const scraper = new Page(browser,page);
 
+    const compare = new Compare();
+
     const data = Array();
 
     await scraper.LoadPage();
@@ -36,19 +39,31 @@ async function Main() {
 
     console.log("Articles are loaded");
 
-    const AllHrefs = await scraper.GetId();
+    const AllHrefs = await scraper.Collect();
+
+
+
+    //const Ids = await scraper.GetId(AllHrefs); 
+
+
 
 
     if (AllHrefs != null && !fs.existsSync(path)){
+
+
       for(let i=0; i < AllHrefs.length; i++){
         let href = AllHrefs[i];
-        let articledata = await scraper.GetData(href);
-        try{
-          data.push(articledata);
-        }catch(e){
-          data.push("NO ARTICLE FOUND");
-        }
+        let id = await scraper.GetId(href);
+        let idcheck = await compare.CompareId();
+        if (idcheck){
+          let articledata = await scraper.GetData(href, id);
+          try{
+            data.push(articledata);
+          }catch(e){
+            data.push("NO ARTICLE FOUND");
+          }
       }
+    }
     
     let jsonData = JSON.stringify(data);
     fs.writeFile(`data/baseline.json`, jsonData, function(err) {

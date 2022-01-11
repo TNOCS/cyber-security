@@ -5,7 +5,8 @@ export declare class Page {
     constructor(b: puppeteer.Browser, p: puppeteer.Page);
     LoadPage(): Promise<void>;
     LoadArticles(): Promise<void>;
-    GetId(): Promise<(string | null)[]>;
-    GetData(href: string | null): Promise<string>;
+    Collect(): Promise<(string | null)[]>;
+    GetId(href: (string | null)): Promise<(string)>;
+    GetData(href: string | null, id: string): Promise<string>;
     TimeConverter(Time: string): string;
 }

@@ -77,18 +77,48 @@ export class Page {
             //await page.waitForNavigation();
         });
     }
-    GetId() {
+    Collect() {
         return __awaiter(this, void 0, void 0, function* () {
             const hrefs1 = yield this.page.evaluate(() => Array.from(document.querySelectorAll('[class="list list--thumb list--wide"] [data-type="article"]'), a => a.getAttribute('href')));
             console.log(`${hrefs1.length - 1} articles found...`);
             return hrefs1;
         });
     }
+    GetId(href) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const page = 'https://www.nu.nl' + href;
+            let IdTime;
+            let IdTitle;
+            let date = new Date();
+            yield this.page.goto(page);
+            try {
+                yield this.page.waitForSelector('[data-type="article.header"] [class="update small"]', { timeout: 2000 });
+                console.log("Id Time FOUND");
+                let Time = yield this.page.$('[data-type="article.header"] [class="update small"]');
+                let TimeUpdate = yield this.page.evaluate(el => el.innerText, Time);
+                IdTime = this.TimeConverter(TimeUpdate);
+            }
+            catch (e) {
+                IdTime = date.toString();
+            }
+            try {
+                yield this.page.waitForSelector('[data-type="article.header"] [class="title fluid"]', { timeout: 2000 });
+                console.log("Id TITLE FOUND");
+                let Title = yield this.page.$('[data-type="article.header"] [class="title fluid"]');
+                IdTitle = yield this.page.evaluate(el => el.innerText, Title);
+            }
+            catch (e) {
+                IdTitle = "NO TITLE FOUND";
+            }
+            const id = IdTitle + IdTime;
+            return id.replace(/[^0-9a-z]/gi, '-');
+        });
+    }
     // article [data-type="article.body"] [class="block-wrapper"]
     // title [data-type="article.header"] [class="block-wrapper section-nu"] [class="title fluid"]
     // time [data-type="article.header"] [class="block-wrapper section-nu"] [class="pubdate small"]
     // author [data-type="article.footer"] [class="author"]
-    GetData(href) {
+    GetData(href, id) {
         return __awaiter(this, void 0, void 0, function* () {
             console.log(`Extracting from: ${href}`);
             var data = Array();
@@ -100,8 +130,8 @@ export class Page {
             let Authorval;
             //let Imgtitle = await this.page.$('[class="headerimage__image"]');
             try {
-                console.log("ARTICLE FOUND");
                 yield this.page.waitForSelector('[data-type="article.body"] [class="block-wrapper"]', { timeout: 2000 });
+                console.log("ARTICLE FOUND");
                 let Article = yield this.page.$('[data-type="article.body"] [class="block-wrapper"]');
                 Articleval = yield this.page.evaluate(el => el.innerText, Article);
             }
@@ -109,8 +139,8 @@ export class Page {
                 Articleval = "NO ARTICLE FOUND";
             }
             try {
-                console.log("Time FOUND");
                 yield this.page.waitForSelector('[data-type="article.header"] [class="update small"]', { timeout: 2000 });
+                console.log("Id Time FOUND");
                 let Time = yield this.page.$('[data-type="article.header"] [class="update small"]');
                 let TimeUpdate = yield this.page.evaluate(el => el.innerText, Time);
                 Timeval = this.TimeConverter(TimeUpdate);
@@ -119,8 +149,8 @@ export class Page {
                 Timeval = "NO TIME FOUND";
             }
             try {
-                console.log("TITLE FOUND");
                 yield this.page.waitForSelector('[data-type="article.header"] [class="title fluid"]', { timeout: 2000 });
+                console.log("TITLE FOUND");
                 let Title = yield this.page.$('[data-type="article.header"] [class="title fluid"]');
                 Titleval = yield this.page.evaluate(el => el.innerText, Title);
             }
@@ -128,8 +158,8 @@ export class Page {
                 Titleval = "NO TITLE FOUND";
             }
             try {
-                console.log("AUTHOR FOUND");
                 yield this.page.waitForSelector('[data-type="article.footer"] [class="author"]', { timeout: 2000 });
+                console.log("AUTHOR FOUND");
                 let Author = yield this.page.$('[data-type="article.footer"] [class="author"]');
                 Authorval = yield this.page.evaluate(el => el.innerText, Author);
             }
@@ -137,22 +167,8 @@ export class Page {
                 Authorval = "NO AUTHOR FOUND";
             }
             //console.log(data[0]);
-            let completedata = JSON.stringify({ link: pagelink, title: Titleval, author: Authorval, date: Timeval, content: Articleval });
+            let completedata = JSON.stringify({ Id: id, link: pagelink, title: Titleval, author: Authorval, date: Timeval, content: Articleval });
             return completedata;
-            //if (Article != null){
-            //let value : string = Articleval;
-            //#region save data to test.txt file
-            //     var jsonData = await JSON.stringify(data);
-            //     await fs.writeFile(`data/Article${i}.txt`, jsonData, function(err) {
-            //       if (err) {
-            //           console.log(err);
-            //       }
-            //     });
-            //   //#endregion  
-            //     }
-            //     else {
-            //       data.push("NO ARTICLE FOUND");
-            //     }
         });
     }
     TimeConverter(Time) {
@@ -184,7 +200,14 @@ export class Page {
                 }
                 else if (HourConditions.some(el => element.includes(el))) {
                     let SplitHour = element.split(" ");
-                    let ValueHour = parseInt(SplitHour[0]);
+                    console.log(SplitHour[0]);
+                    let ValueHour = 0;
+                    if (SplitHour[0] == "een") {
+                        let ValueHour = 1;
+                    }
+                    else {
+                        let ValueHour = parseInt(SplitHour[0]);
+                    }
                     Today.setHours(Today.getHours() - ValueHour);
                 }
                 else if (MinuteConditions.some(el => element.includes(el))) {

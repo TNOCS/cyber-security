@@ -106,6 +106,8 @@ export class Page{
         
         console.log(numberofloadmoreclicks);
 
+        
+
         //await this.page.waitForNavigation({waitUntil:"domcontentloaded"});
 
         
@@ -122,8 +124,7 @@ export class Page{
         
     }
 
-    public async GetId(): Promise<(string| null)[]>{
-
+    public async Collect(): Promise<(string| null)[]>{
         const hrefs1 = await this.page.evaluate(
             () => Array.from(
               document.querySelectorAll('[class="list list--thumb list--wide"] [data-type="article"]'),
@@ -136,6 +137,49 @@ export class Page{
 
 
         return hrefs1;
+        
+    }
+
+
+    public async GetId(href: (string | null)): Promise<(string)>{
+        
+        const page = 'https://www.nu.nl'+href;
+
+        let IdTime
+        let IdTitle
+
+        let date = new Date();
+
+        await this.page.goto(page);
+
+        try{
+            
+            await this.page.waitForSelector('[data-type="article.header"] [class="update small"]', {timeout: 2000});
+            console.log("Id Time FOUND");
+
+            let Time = await this.page.$('[data-type="article.header"] [class="update small"]');
+            let TimeUpdate = await this.page.evaluate(el => el.innerText, Time);
+            IdTime = this.TimeConverter(TimeUpdate);
+        } catch (e){
+            IdTime = date.toString();
+        }
+
+        try {     
+            await this.page.waitForSelector('[data-type="article.header"] [class="title fluid"]', {timeout: 2000});
+            console.log("Id TITLE FOUND");
+
+            let Title = await this.page.$('[data-type="article.header"] [class="title fluid"]');
+
+            IdTitle= await this.page.evaluate(el => el.innerText, Title);
+
+        } catch (e){
+            IdTitle = "NO TITLE FOUND";
+        }
+
+        const id = IdTitle+IdTime;
+
+        
+        return id.replace(/[^0-9a-z]/gi, '-')
     }
 
     // article [data-type="article.body"] [class="block-wrapper"]
@@ -146,7 +190,7 @@ export class Page{
 
     // author [data-type="article.footer"] [class="author"]
 
-    public async GetData(href : string | null): Promise<string>{
+    public async GetData(href : string | null, id : string): Promise<string>{
 
         console.log(`Extracting from: ${href}`);
 
@@ -167,8 +211,9 @@ export class Page{
         
 
         try{
-            console.log("ARTICLE FOUND");
+            
             await this.page.waitForSelector('[data-type="article.body"] [class="block-wrapper"]', {timeout: 2000});
+            console.log("ARTICLE FOUND");
 
             let Article = await this.page.$('[data-type="article.body"] [class="block-wrapper"]');
             Articleval = await this.page.evaluate(el => el.innerText, Article);
@@ -180,8 +225,9 @@ export class Page{
 
 
         try{
-            console.log("Time FOUND");
+            
             await this.page.waitForSelector('[data-type="article.header"] [class="update small"]', {timeout: 2000});
+            console.log("Id Time FOUND");
 
             let Time = await this.page.$('[data-type="article.header"] [class="update small"]');
             let TimeUpdate = await this.page.evaluate(el => el.innerText, Time);
@@ -189,12 +235,14 @@ export class Page{
         } catch (e){
             Timeval = "NO TIME FOUND";
         }
-        
+
+
 
 
         try {
-            console.log("TITLE FOUND");
+            
             await this.page.waitForSelector('[data-type="article.header"] [class="title fluid"]', {timeout: 2000});
+            console.log("TITLE FOUND");
 
             let Title = await this.page.$('[data-type="article.header"] [class="title fluid"]');
 
@@ -206,8 +254,9 @@ export class Page{
 
 
         try{
-            console.log("AUTHOR FOUND");
+            
             await this.page.waitForSelector('[data-type="article.footer"] [class="author"]', {timeout: 2000});
+            console.log("AUTHOR FOUND");
 
             let Author = await this.page.$('[data-type="article.footer"] [class="author"]');
             Authorval = await this.page.evaluate(el => el.innerText, Author);
@@ -220,46 +269,17 @@ export class Page{
         //console.log(data[0]);
     
 
-        let completedata = JSON.stringify({link: pagelink,title: Titleval, author: Authorval, date: Timeval, content: Articleval});
+        let completedata = JSON.stringify({Id: id,link: pagelink,title: Titleval, author: Authorval, date: Timeval, content: Articleval});
 
         return completedata;
 
-        
-
-
-        //if (Article != null){
-
-            
-            
-            
-
-            
-
-            
-
-            //let value : string = Articleval;
-
-
-            
-
-        //#region save data to test.txt file
-    //     var jsonData = await JSON.stringify(data);
-    //     await fs.writeFile(`data/Article${i}.txt`, jsonData, function(err) {
-    //       if (err) {
-    //           console.log(err);
-    //       }
-    //     });
-
-    //   //#endregion  
-
-
-    //     }
-    //     else {
-    //       data.push("NO ARTICLE FOUND");
-    //     }
-
-
     }
+
+
+
+
+
+
 
 
     public TimeConverter(Time: string){
@@ -310,8 +330,15 @@ export class Page{
 
                     else if (HourConditions.some(el => element.includes(el))) {
                         let SplitHour = element.split(" ");
+                        console.log(SplitHour[0]);
+                        let ValueHour = 0;
 
-                        let ValueHour = parseInt(SplitHour[0]);  
+                        if (SplitHour[0] == "een"){
+                            let ValueHour = 1;
+                        }else{
+                            let ValueHour = parseInt(SplitHour[0]);
+                        }
+                        
 
                         Today.setHours(Today.getHours() - ValueHour);
                     }

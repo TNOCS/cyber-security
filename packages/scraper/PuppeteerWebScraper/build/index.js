@@ -8,6 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import { Page } from "./page.js";
+import { Compare } from "./compare.js";
 import puppeteer from 'puppeteer';
 import fs from "fs";
 ////////////////////////////////////////////////////////////////////////
@@ -27,21 +28,27 @@ function Main() {
         const path = './data/baseline.json';
         const page = yield browser.newPage();
         const scraper = new Page(browser, page);
+        const compare = new Compare();
         const data = Array();
         yield scraper.LoadPage();
         console.log("Page is loaded");
         yield scraper.LoadArticles();
         console.log("Articles are loaded");
-        const AllHrefs = yield scraper.GetId();
+        const AllHrefs = yield scraper.Collect();
+        //const Ids = await scraper.GetId(AllHrefs); 
         if (AllHrefs != null && !fs.existsSync(path)) {
             for (let i = 0; i < AllHrefs.length; i++) {
                 let href = AllHrefs[i];
-                let articledata = yield scraper.GetData(href);
-                try {
-                    data.push(articledata);
-                }
-                catch (e) {
-                    data.push("NO ARTICLE FOUND");
+                let id = yield scraper.GetId(href);
+                let idcheck = yield compare.CompareId();
+                if (idcheck) {
+                    let articledata = yield scraper.GetData(href, id);
+                    try {
+                        data.push(articledata);
+                    }
+                    catch (e) {
+                        data.push("NO ARTICLE FOUND");
+                    }
                 }
             }
             let jsonData = JSON.stringify(data);
