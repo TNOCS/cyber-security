@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer';
-import { Article } from './article';
+import { IArticle } from './iarticle';
 export declare class Page {
     browser: puppeteer.Browser;
     page: puppeteer.Page;
@@ -8,7 +8,8 @@ export declare class Page {
     LoadArticles(): Promise<void>;
     Collect(): Promise<(string | null)[]>;
     GetId(href: (string | null)): Promise<(string)>;
-    GetData(href: string | null, id: string): Promise<Article>;
-    Update(data: Article, obj: Article[]): Article[];
+    GetData(href: string | null, id: string): Promise<IArticle>;
+    Update(data: IArticle, obj: IArticle[]): IArticle[];
+    DeleteOldData(Obj: IArticle[]): IArticle[];
     TimeConverter(Time: string): string;
 }

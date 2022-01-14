@@ -7,6 +7,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import fs from "fs";
 export class Page {
     constructor(b, p) {
         this.browser = b;
@@ -15,22 +16,13 @@ export class Page {
     ;
     LoadPage(visible) {
         return __awaiter(this, void 0, void 0, function* () {
+            const Var = fs.readFileSync(`src/config.json`, 'utf8');
+            const Varobj = JSON.parse(Var);
             const delay = (ms) => new Promise(res => setTimeout(res, ms));
-            //browser = await puppeteer.launch({headless:false});
-            //page = await browser.newPage();
-            //let Pages = await this.browser.pages();
-            //console.log(Pages);
-            yield this.page.goto('https://www.nu.nl/binnenland');
-            //const frames = await this.page.frames();
-            //frames.forEach(eachframe => {
-            //    console.log(`${eachframe}`);
-            //});
-            //await this.page.waitForSelector('[class="message-component message-button no-children focusable pg-accept-button sp_choice_type_11"]');
-            //await this.page.click('[class="message-component message-button no-children focusable pg-accept-button sp_choice_type_11"]');
-            //await this.page.waitForNavigation();
+            yield this.page.goto(Varobj.Webpage);
             yield delay(2000);
             try {
-                const PopupSelector = '[class="overlay webpush-popup active"] [class="fa fa-times overlay-close trackevent"]';
+                const PopupSelector = Varobj.PopupSelector;
                 yield this.page.waitForSelector(PopupSelector, { timeout: 5000 });
                 yield delay(2000);
                 yield this.page.click(PopupSelector);
@@ -38,16 +30,13 @@ export class Page {
             catch (e) {
                 return;
             }
-            //const Xbutton = await page.evaluate( () => document.querySelector('[class="overlay webpush-popup active"] [class="fa fa-times overlay-close trackevent"]') as HTMLElement);
-            //await page.waitForSelector('[class="overlay webpush-popup active"] [class="fa fa-times overlay-close trackevent"]');
-            //await page.goto('https://www.nu.nl/binnenland');
-            //await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
-            //await delay(1000);
             console.log("Page is ready");
         });
     }
     LoadArticles() {
         return __awaiter(this, void 0, void 0, function* () {
+            const Var = fs.readFileSync(`src/config.json`, 'utf8');
+            const Varobj = JSON.parse(Var);
             const delay = (ms) => new Promise(res => setTimeout(res, ms));
             const isElementVisible = (page, cssSelector) => __awaiter(this, void 0, void 0, function* () {
                 let visible = true;
@@ -58,25 +47,17 @@ export class Page {
                 });
                 return visible;
             });
-            const selectorForLoadMoreButton = '[href="JavaScript:void(0)"]';
-            const articleSelector = '[class="list list--thumb list--wide"] [data-type="article"]';
+            const selectorForLoadMoreButton = Varobj.LoadMoreButton;
             let numberofloadmoreclicks = 0;
             let loadMoreVisible = yield isElementVisible(this.page, selectorForLoadMoreButton);
             while (loadMoreVisible && numberofloadmoreclicks < 1) {
                 numberofloadmoreclicks++;
-                //console.log(numberofloadmoreclicks)
                 yield this.page
                     .click(selectorForLoadMoreButton)
                     .catch(() => { });
                 loadMoreVisible = yield isElementVisible(this.page, selectorForLoadMoreButton);
                 yield delay(2000);
             }
-            //await this.page.waitForNavigation({waitUntil:"domcontentloaded"});
-            //this.browser.close();
-            // await page.waitForNavigation({
-            //   waitUntil: 'networkidle0',
-            // });
-            //await page.waitForNavigation();
         });
     }
     Collect() {
@@ -88,14 +69,17 @@ export class Page {
     }
     GetId(href) {
         return __awaiter(this, void 0, void 0, function* () {
+            const Var = fs.readFileSync(`src/config.json`, 'utf8');
+            const Varobj = JSON.parse(Var);
             const page = 'https://www.nu.nl' + href;
             let IdTime;
             let IdTitle;
             let date = new Date();
             yield this.page.goto(page);
             try {
-                yield this.page.waitForSelector('[data-type="article.header"] [class="update small"]', { timeout: 2000 });
-                let Time = yield this.page.$('[data-type="article.header"] [class="update small"]');
+                const TimeSelector = Varobj.TimeSelector;
+                yield this.page.waitForSelector(TimeSelector, { timeout: 2000 });
+                let Time = yield this.page.$(TimeSelector);
                 let TimeUpdate = yield this.page.evaluate(el => el.innerText, Time);
                 IdTime = this.TimeConverter(TimeUpdate);
             }
@@ -103,8 +87,9 @@ export class Page {
                 IdTime = date.toString();
             }
             try {
-                yield this.page.waitForSelector('[data-type="article.header"] [class="title fluid"]', { timeout: 2000 });
-                let Title = yield this.page.$('[data-type="article.header"] [class="title fluid"]');
+                const TitleSelector = Varobj.TitleSelector;
+                yield this.page.waitForSelector(TitleSelector, { timeout: 2000 });
+                let Title = yield this.page.$(TitleSelector);
                 IdTitle = yield this.page.evaluate(el => el.innerText, Title);
             }
             catch (e) {
@@ -114,12 +99,10 @@ export class Page {
             return id;
         });
     }
-    // article [data-type="article.body"] [class="block-wrapper"]
-    // title [data-type="article.header"] [class="block-wrapper section-nu"] [class="title fluid"]
-    // time [data-type="article.header"] [class="block-wrapper section-nu"] [class="pubdate small"]
-    // author [data-type="article.footer"] [class="author"]
     GetData(href, id) {
         return __awaiter(this, void 0, void 0, function* () {
+            const Var = fs.readFileSync(`src/config.json`, 'utf8');
+            const Varobj = JSON.parse(Var);
             console.log(`Extracting from: ${href}`);
             var data = Array();
             const pagelink = 'https://www.nu.nl' + href;
@@ -128,20 +111,21 @@ export class Page {
             let Timeval;
             let Titleval;
             let Authorval;
-            //let Imgtitle = await this.page.$('[class="headerimage__image"]');
             try {
-                yield this.page.waitForSelector('[data-type="article.body"] [class="block-wrapper"]', { timeout: 2000 });
+                const ArticleContentSelector = Varobj.ArticleContentSelector;
+                yield this.page.waitForSelector(ArticleContentSelector, { timeout: 2000 });
                 console.log("ARTICLE FOUND");
-                let Article = yield this.page.$('[data-type="article.body"] [class="block-wrapper"]');
+                let Article = yield this.page.$(ArticleContentSelector);
                 Articleval = yield this.page.evaluate(el => el.innerText, Article);
             }
             catch (e) {
                 Articleval = "NO ARTICLE FOUND";
             }
             try {
-                yield this.page.waitForSelector('[data-type="article.header"] [class="update small"]', { timeout: 2000 });
-                console.log("Id Time FOUND");
-                let Time = yield this.page.$('[data-type="article.header"] [class="update small"]');
+                const TimeSelector = Varobj.TimeSelector;
+                yield this.page.waitForSelector(TimeSelector, { timeout: 2000 });
+                console.log("TIME FOUND");
+                let Time = yield this.page.$(TimeSelector);
                 let TimeUpdate = yield this.page.evaluate(el => el.innerText, Time);
                 Timeval = this.TimeConverter(TimeUpdate);
             }
@@ -149,51 +133,54 @@ export class Page {
                 Timeval = "NO TIME FOUND";
             }
             try {
-                yield this.page.waitForSelector('[data-type="article.header"] [class="title fluid"]', { timeout: 2000 });
+                const TitleSelector = Varobj.TitleSelector;
+                yield this.page.waitForSelector(TitleSelector, { timeout: 2000 });
                 console.log("TITLE FOUND");
-                let Title = yield this.page.$('[data-type="article.header"] [class="title fluid"]');
+                let Title = yield this.page.$(TitleSelector);
                 Titleval = yield this.page.evaluate(el => el.innerText, Title);
             }
             catch (e) {
                 Titleval = "NO TITLE FOUND";
             }
             try {
-                yield this.page.waitForSelector('[data-type="article.footer"] [class="author"]', { timeout: 2000 });
+                const AuthorSelector = Varobj.AuthorSelector;
+                yield this.page.waitForSelector(AuthorSelector, { timeout: 2000 });
                 console.log("AUTHOR FOUND");
-                let Author = yield this.page.$('[data-type="article.footer"] [class="author"]');
+                let Author = yield this.page.$(AuthorSelector);
                 Authorval = yield this.page.evaluate(el => el.innerText, Author);
             }
             catch (e) {
                 Authorval = "NO AUTHOR FOUND";
             }
-            //console.log(data[0]);
             let stringdata = JSON.stringify({ Id: id, link: pagelink, title: Titleval, author: Authorval, date: Timeval, content: Articleval });
             let completedata = JSON.parse(stringdata);
-            //let completedataobj = 
             return completedata;
         });
     }
     Update(data, obj) {
         let Item = obj.findIndex(a => a.link == data.link);
-        //console.log(`${obj[Item].author,obj[Item].content,obj[Item].date,obj[Item].link, obj[Item].title}`)
         obj[Item] = data;
         console.log(`this item has been updated: ${obj[Item].link}`);
         return obj;
     }
+    DeleteOldData(Obj) {
+        for (let index = 0; index < Obj.length; index++) {
+            const element = Obj[index];
+            let date = new Date(element.date);
+            let today = new Date();
+            let dif = today.getTime() - date.getTime();
+            dif = (dif) / (1000 * 60 * 60 * 24);
+            if (dif > 15) {
+                Obj.splice(index, 1);
+            }
+        }
+        return Obj;
+    }
     TimeConverter(Time) {
-        //Time to lowercase??
-        //let re = /([0-9]+|een)\s(dagen|uur|dag|minuten|minuut)/g
         let re = /(?<CompleteTime>(?<TimeVal>[0-9]+|een)\s(?<TimeUnit>dagen|uur|dag|minuten|minuut))|(?<CompleteDate>(?<DateDate>[0-9]+)-(?<DateMonth>[0-9]+)-(?<DateYear>[0-9]+)\s(?<DateHour>[0-9]+):(?<DateMinute>[0-9]+))/g;
         const TimeMatch = Time.match(re);
         let TimeGroups = Time.matchAll(re);
-        // for (let group of TimeGroups){
-        //     console.log(group[0], group[1]);
-        // }
-        //console.log(TimeGroups);
-        //console.log(TimeGroups?.CompleteDate);
         let Today = new Date();
-        //update with group names?
-        //if (TimeGroups?.CompleteTime != null){   ---- Groups have to work
         try {
             TimeMatch === null || TimeMatch === void 0 ? void 0 : TimeMatch.forEach(element => {
                 const DayConditions = ["dagen", "dag"];

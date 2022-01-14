@@ -1,0 +1,11 @@
+{
+    "Webpage": "https://www.nu.nl/binnenland",
+    "PopupSelector": "[class=\"overlay webpush-popup active\"] [class=\"fa fa-times overlay-close trackevent\"]",
+    "LoadMoreButton": "[href=\"JavaScript:void(0)\"]",
+    "TimeSelector": "[data-type=\"article.header\"] [class=\"update small\"]",
+    "TitleSelector": "[data-type=\"article.header\"] [class=\"title fluid\"]", 
+    "ArticleContentSelector": "[data-type=\"article.body\"] [class=\"block-wrapper\"]",
+    "AuthorSelector": "[data-type=\"article.footer\"] [class=\"author\"]",
+    "PathToDataFile": "./data/baseline.json",
+    "IdleTimeMin": 2 
+}

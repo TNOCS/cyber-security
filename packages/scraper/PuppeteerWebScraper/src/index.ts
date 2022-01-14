@@ -1,20 +1,11 @@
-import { testClass } from "./testclass.js"; // NOTE the extension - needed for ES6
 import { Page} from "./page.js";
 import { Compare } from "./compare.js";
 import puppeteer from 'puppeteer';
 import fs from "fs";
-import {Article} from "./article";
+import {IArticle} from "./iarticle";
+import { IConfig } from './iconfig';
 import { setgroups } from "process";
 import { setInterval } from "timers/promises";
-
-/////////////////////////////////////////////////////////////
-//                                                         //
-//  - check code for correct const/let usage               // 
-//  - add compare function to check for changes            //
-//  - way to safe the articles                             //
-//  - config file                                          //
-//                                                         //
-/////////////////////////////////////////////////////////////
 
 class Timer {
   constructor(public counter = 2) {
@@ -46,9 +37,11 @@ class Main{
 
     public async Scrape(browser: puppeteer.Browser, page: puppeteer.Page) {   
       
-      //const delay = ( ms: any) => new Promise(res => setTimeout(res, ms));
-  
-      const path = './data/baseline.json';
+
+      const Var = fs.readFileSync(`src/config.json`, 'utf8');
+      const Varobj:IConfig = JSON.parse(Var);
+      
+      const path = Varobj.PathToDataFile;
 
       const scraper = new Page(browser,page);
 
@@ -59,21 +52,16 @@ class Main{
       let data = Array();
 
       let ScrpOrUpdt = [true, false];
-  
-      //const page = await browser.newPage();
-
-
-      // Capture the json array as a object. check if its a new article, a needed update or a deletion, make function
-      // that performs the task, at the end push the new data and write it as a file.
 
 
       for (let index = 0; index < 1;) {
 
-        let dataobj: Article[] = [];
+        let dataobj: IArticle[] = [];
 
         if (fs.existsSync(path)){
           let data = fs.readFileSync(`data/baseline.json`, 'utf8');
           dataobj = JSON.parse(data);
+          dataobj = scraper.DeleteOldData(dataobj);
         }
     
         await scraper.LoadPage(visible);
@@ -87,11 +75,6 @@ class Main{
         const AllHrefs = await scraper.Collect();
 
         console.log("Hrefs are collected");
-    
-        //const Ids = await scraper.GetId(AllHrefs); 
-    
-    
-        //&& !fs.existsSync(path
     
         if (AllHrefs != null){
 
@@ -109,7 +92,7 @@ class Main{
             else{ ScrpOrUpdt = compare.CompareId(id);}
 
               if (ScrpOrUpdt[0] == true){
-                let articledata:Article = await scraper.GetData(href, id);
+                let articledata:IArticle = await scraper.GetData(href, id);
 
 
                 if (ScrpOrUpdt[1] == true){
@@ -143,8 +126,7 @@ class Main{
           });
 
     console.log("ALL DONE");
-    // function that counts down
-    const timer = new Timer();
+    const timer = new Timer(Varobj.IdleTimeMin);
     console.log("Waiting...");
     await timer.doTimer();
 
@@ -155,31 +137,17 @@ class Main{
 
 
 async function delay(ms: number) {
-  // return await for better async stack trace support in case of errors.
   return await new Promise(resolve => setTimeout(resolve, ms));
 }
-
-//const timer = 2000
 
 async function Run() {
   const start = new Main();
   const [browser, page] = await start.Setup();
-
-  //start.Scrape(browser,page)
   await start.Scrape(browser,page);
     
   
 }
 
 Run();
-//let scaper = new Compare();
-//console.log(scaper.CompareId("24 verwaarloosde hondjes uit Geldermalsen maken het inmiddels beter/^/Tue Jan 12 2022 00:57:00 GMT+0100 (Midden-Europese standaardtijd)"));
 
 
-
-
-//Main();
-
-//const collect = new testClass();
-
-//collect.collectarticles();
