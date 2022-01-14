@@ -1,3 +1,4 @@
 export declare class Compare {
-    CompareId(): boolean;
+    CompareId(id: string): boolean[];
+    Updated(olddate: string, newdate: string): boolean;
 }

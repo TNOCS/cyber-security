@@ -1,6 +1,7 @@
 import { TIMEOUT } from 'dns';
 import puppeteer from 'puppeteer';
 import { text } from 'stream/consumers';
+import { Article } from './article';
 
 export class Page{
 
@@ -14,21 +15,21 @@ export class Page{
 
     };
 
-    public async LoadPage() : Promise<void>{
+    public async LoadPage(visible : boolean) : Promise<void>{
 
         const delay = ( ms: any) => new Promise(res => setTimeout(res, ms));
 
         //browser = await puppeteer.launch({headless:false});
         //page = await browser.newPage();
 
-        let Pages = await this.browser.pages();
+        //let Pages = await this.browser.pages();
 
         //console.log(Pages);
   
   
         await this.page.goto('https://www.nu.nl/binnenland');
   
-        await delay(2000);
+        
 
         //const frames = await this.page.frames();
 
@@ -45,17 +46,25 @@ export class Page{
         
         //await this.page.waitForNavigation();
 
+       
+
         await delay(2000);
 
-        const PopupSelector = '[class="overlay webpush-popup active"] [class="fa fa-times overlay-close trackevent"]';
-  
-        await this.page.waitForSelector(PopupSelector);
+        try{
+            const PopupSelector = '[class="overlay webpush-popup active"] [class="fa fa-times overlay-close trackevent"]';
+            await this.page.waitForSelector(PopupSelector, {timeout: 5000});
+            await delay(2000);
+            await this.page.click(PopupSelector);
+        } catch(e){
+            return;
+        }
+
+        
   
 
         //const Xbutton = await page.evaluate( () => document.querySelector('[class="overlay webpush-popup active"] [class="fa fa-times overlay-close trackevent"]') as HTMLElement);
 
-        await this.page.click(PopupSelector);
-        console.log("clicked button");
+       
         
 
         //await page.waitForSelector('[class="overlay webpush-popup active"] [class="fa fa-times overlay-close trackevent"]');
@@ -91,7 +100,6 @@ export class Page{
           
         let loadMoreVisible = await isElementVisible(this.page, selectorForLoadMoreButton);
     
-        console.log('load more test');
           
         while (loadMoreVisible && numberofloadmoreclicks < 1) {
             numberofloadmoreclicks++;
@@ -103,8 +111,6 @@ export class Page{
             await delay(2000);
           
         }
-        
-        console.log(numberofloadmoreclicks);
 
         
 
@@ -155,7 +161,6 @@ export class Page{
         try{
             
             await this.page.waitForSelector('[data-type="article.header"] [class="update small"]', {timeout: 2000});
-            console.log("Id Time FOUND");
 
             let Time = await this.page.$('[data-type="article.header"] [class="update small"]');
             let TimeUpdate = await this.page.evaluate(el => el.innerText, Time);
@@ -166,7 +171,6 @@ export class Page{
 
         try {     
             await this.page.waitForSelector('[data-type="article.header"] [class="title fluid"]', {timeout: 2000});
-            console.log("Id TITLE FOUND");
 
             let Title = await this.page.$('[data-type="article.header"] [class="title fluid"]');
 
@@ -176,10 +180,10 @@ export class Page{
             IdTitle = "NO TITLE FOUND";
         }
 
-        const id = IdTitle+IdTime;
+        const id = IdTitle+"/^/"+IdTime;
 
         
-        return id.replace(/[^0-9a-z]/gi, '-')
+        return id
     }
 
     // article [data-type="article.body"] [class="block-wrapper"]
@@ -190,7 +194,7 @@ export class Page{
 
     // author [data-type="article.footer"] [class="author"]
 
-    public async GetData(href : string | null, id : string): Promise<string>{
+    public async GetData(href : string | null, id : string): Promise<Article>{
 
         console.log(`Extracting from: ${href}`);
 
@@ -268,19 +272,28 @@ export class Page{
 
         //console.log(data[0]);
     
+        let stringdata = JSON.stringify({Id: id,link: pagelink,title: Titleval, author: Authorval, date: Timeval, content: Articleval});
+        let completedata: Article = JSON.parse(stringdata);
 
-        let completedata = JSON.stringify({Id: id,link: pagelink,title: Titleval, author: Authorval, date: Timeval, content: Articleval});
-
+        //let completedataobj = 
         return completedata;
 
     }
 
+    public Update(data: Article, obj : Article[]){
+
+        let Item = obj.findIndex(a => a.link == data.link);
+
+        //console.log(`${obj[Item].author,obj[Item].content,obj[Item].date,obj[Item].link, obj[Item].title}`)
+
+        obj[Item] = data
+
+        console.log(`this item has been updated: ${obj[Item].link}`);
+
+        return obj;
 
 
-
-
-
-
+    } 
 
     public TimeConverter(Time: string){
 
@@ -314,10 +327,6 @@ export class Page{
                     const MinuteConditions = ["minuut", "minuten"];
 
                     const FullDateConditions = ["-", ":"];
-
-                    //const FullDateConditions = [":"];
-
-                    //other option = element.split(" ")[1] => 
  
                     if (DayConditions.some(el => element.includes(el))) {
                         let SplitDay = element.split(" ");
@@ -330,13 +339,12 @@ export class Page{
 
                     else if (HourConditions.some(el => element.includes(el))) {
                         let SplitHour = element.split(" ");
-                        console.log(SplitHour[0]);
                         let ValueHour = 0;
 
                         if (SplitHour[0] == "een"){
-                            let ValueHour = 1;
+                            ValueHour = 1;
                         }else{
-                            let ValueHour = parseInt(SplitHour[0]);
+                            ValueHour = parseInt(SplitHour[0]);
                         }
                         
 
@@ -390,8 +398,7 @@ export class Page{
                         console.log("Done");
 
                     }
-
-                    
+                   
                 });
             } catch(e){
                 console.log("TO TIME FOUND, USING CURRENT TIME");

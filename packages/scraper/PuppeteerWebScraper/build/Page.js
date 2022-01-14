@@ -13,15 +13,14 @@ export class Page {
         this.page = p;
     }
     ;
-    LoadPage() {
+    LoadPage(visible) {
         return __awaiter(this, void 0, void 0, function* () {
             const delay = (ms) => new Promise(res => setTimeout(res, ms));
             //browser = await puppeteer.launch({headless:false});
             //page = await browser.newPage();
-            let Pages = yield this.browser.pages();
+            //let Pages = await this.browser.pages();
             //console.log(Pages);
             yield this.page.goto('https://www.nu.nl/binnenland');
-            yield delay(2000);
             //const frames = await this.page.frames();
             //frames.forEach(eachframe => {
             //    console.log(`${eachframe}`);
@@ -30,11 +29,16 @@ export class Page {
             //await this.page.click('[class="message-component message-button no-children focusable pg-accept-button sp_choice_type_11"]');
             //await this.page.waitForNavigation();
             yield delay(2000);
-            const PopupSelector = '[class="overlay webpush-popup active"] [class="fa fa-times overlay-close trackevent"]';
-            yield this.page.waitForSelector(PopupSelector);
+            try {
+                const PopupSelector = '[class="overlay webpush-popup active"] [class="fa fa-times overlay-close trackevent"]';
+                yield this.page.waitForSelector(PopupSelector, { timeout: 5000 });
+                yield delay(2000);
+                yield this.page.click(PopupSelector);
+            }
+            catch (e) {
+                return;
+            }
             //const Xbutton = await page.evaluate( () => document.querySelector('[class="overlay webpush-popup active"] [class="fa fa-times overlay-close trackevent"]') as HTMLElement);
-            yield this.page.click(PopupSelector);
-            console.log("clicked button");
             //await page.waitForSelector('[class="overlay webpush-popup active"] [class="fa fa-times overlay-close trackevent"]');
             //await page.goto('https://www.nu.nl/binnenland');
             //await page.reload({ waitUntil: ["networkidle0", "domcontentloaded"] });
@@ -58,7 +62,6 @@ export class Page {
             const articleSelector = '[class="list list--thumb list--wide"] [data-type="article"]';
             let numberofloadmoreclicks = 0;
             let loadMoreVisible = yield isElementVisible(this.page, selectorForLoadMoreButton);
-            console.log('load more test');
             while (loadMoreVisible && numberofloadmoreclicks < 1) {
                 numberofloadmoreclicks++;
                 //console.log(numberofloadmoreclicks)
@@ -68,7 +71,6 @@ export class Page {
                 loadMoreVisible = yield isElementVisible(this.page, selectorForLoadMoreButton);
                 yield delay(2000);
             }
-            console.log(numberofloadmoreclicks);
             //await this.page.waitForNavigation({waitUntil:"domcontentloaded"});
             //this.browser.close();
             // await page.waitForNavigation({
@@ -93,7 +95,6 @@ export class Page {
             yield this.page.goto(page);
             try {
                 yield this.page.waitForSelector('[data-type="article.header"] [class="update small"]', { timeout: 2000 });
-                console.log("Id Time FOUND");
                 let Time = yield this.page.$('[data-type="article.header"] [class="update small"]');
                 let TimeUpdate = yield this.page.evaluate(el => el.innerText, Time);
                 IdTime = this.TimeConverter(TimeUpdate);
@@ -103,15 +104,14 @@ export class Page {
             }
             try {
                 yield this.page.waitForSelector('[data-type="article.header"] [class="title fluid"]', { timeout: 2000 });
-                console.log("Id TITLE FOUND");
                 let Title = yield this.page.$('[data-type="article.header"] [class="title fluid"]');
                 IdTitle = yield this.page.evaluate(el => el.innerText, Title);
             }
             catch (e) {
                 IdTitle = "NO TITLE FOUND";
             }
-            const id = IdTitle + IdTime;
-            return id.replace(/[^0-9a-z]/gi, '-');
+            const id = IdTitle + "/^/" + IdTime;
+            return id;
         });
     }
     // article [data-type="article.body"] [class="block-wrapper"]
@@ -167,9 +167,18 @@ export class Page {
                 Authorval = "NO AUTHOR FOUND";
             }
             //console.log(data[0]);
-            let completedata = JSON.stringify({ Id: id, link: pagelink, title: Titleval, author: Authorval, date: Timeval, content: Articleval });
+            let stringdata = JSON.stringify({ Id: id, link: pagelink, title: Titleval, author: Authorval, date: Timeval, content: Articleval });
+            let completedata = JSON.parse(stringdata);
+            //let completedataobj = 
             return completedata;
         });
+    }
+    Update(data, obj) {
+        let Item = obj.findIndex(a => a.link == data.link);
+        //console.log(`${obj[Item].author,obj[Item].content,obj[Item].date,obj[Item].link, obj[Item].title}`)
+        obj[Item] = data;
+        console.log(`this item has been updated: ${obj[Item].link}`);
+        return obj;
     }
     TimeConverter(Time) {
         //Time to lowercase??
@@ -191,8 +200,6 @@ export class Page {
                 const HourConditions = ["uur"];
                 const MinuteConditions = ["minuut", "minuten"];
                 const FullDateConditions = ["-", ":"];
-                //const FullDateConditions = [":"];
-                //other option = element.split(" ")[1] => 
                 if (DayConditions.some(el => element.includes(el))) {
                     let SplitDay = element.split(" ");
                     let ValueDay = parseInt(SplitDay[0]);
@@ -200,13 +207,12 @@ export class Page {
                 }
                 else if (HourConditions.some(el => element.includes(el))) {
                     let SplitHour = element.split(" ");
-                    console.log(SplitHour[0]);
                     let ValueHour = 0;
                     if (SplitHour[0] == "een") {
-                        let ValueHour = 1;
+                        ValueHour = 1;
                     }
                     else {
-                        let ValueHour = parseInt(SplitHour[0]);
+                        ValueHour = parseInt(SplitHour[0]);
                     }
                     Today.setHours(Today.getHours() - ValueHour);
                 }
