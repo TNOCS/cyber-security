@@ -11,6 +11,7 @@ import { Page } from "./page.js";
 import { Compare } from "./compare.js";
 import puppeteer from 'puppeteer';
 import fs from "fs";
+// The timer used (per minute)
 class Timer {
     constructor(counter = 2) {
         this.counter = counter;
@@ -28,6 +29,7 @@ class Timer {
 class Main {
     constructor() {
     }
+    // The browser is started and a new page is opened.
     Setup() {
         return __awaiter(this, void 0, void 0, function* () {
             const browser = yield puppeteer.launch({ headless: false, args: [
@@ -38,6 +40,7 @@ class Main {
             return [browser, page];
         });
     }
+    // This is the main scrape function
     Scrape(browser, page) {
         return __awaiter(this, void 0, void 0, function* () {
             const Var = fs.readFileSync(`src/config.json`, 'utf8');
@@ -45,41 +48,47 @@ class Main {
             const path = Varobj.PathToDataFile;
             const scraper = new Page(browser, page);
             const compare = new Compare();
-            let visible = true;
-            let data = Array();
-            let ScrpOrUpdt = [true, false];
+            let scrapeOrupdate = [true, false];
+            // This loop runs forever. Or until the user stops the program (ctrl+c)
             for (let index = 0; index < 1;) {
-                let dataobj = [];
+                let dataObj = [];
                 if (fs.existsSync(path)) {
                     let data = fs.readFileSync(`data/baseline.json`, 'utf8');
-                    dataobj = JSON.parse(data);
-                    dataobj = scraper.DeleteOldData(dataobj);
+                    dataObj = JSON.parse(data);
+                    dataObj = scraper.DeleteOldData(dataObj);
                 }
-                yield scraper.LoadPage(visible);
+                // This loads the correct news site
+                yield scraper.LoadPage();
                 console.log("Page is loaded");
+                // This loads all the articles on the webpage
                 yield scraper.LoadArticles();
                 console.log("Articles are loaded");
-                const AllHrefs = yield scraper.Collect();
+                // This collects all the links from all the articles on the webpage
+                const allHrefs = yield scraper.Collect();
                 console.log("Hrefs are collected");
-                if (AllHrefs != null) {
-                    for (let i = 0; i < AllHrefs.length; i++) {
-                        let href = AllHrefs[i];
+                if (allHrefs != null) {
+                    for (let i = 0; i < allHrefs.length; i++) {
+                        let href = allHrefs[i];
                         let id = yield scraper.GetId(href);
                         console.log("[Id]: Id is collected");
                         if (!fs.existsSync(path)) {
-                            ScrpOrUpdt[0] = true;
+                            scrapeOrupdate[0] = true;
                         }
+                        // This checks if a link should be scraped or not (new or old data)
                         else {
-                            ScrpOrUpdt = compare.CompareId(id);
+                            scrapeOrupdate = compare.CompareId(id);
                         }
-                        if (ScrpOrUpdt[0] == true) {
-                            let articledata = yield scraper.GetData(href, id);
-                            if (ScrpOrUpdt[1] == true) {
-                                dataobj = scraper.Update(articledata, dataobj);
+                        if (scrapeOrupdate[0] == true) {
+                            // This is the function that collects the data from a article 
+                            let articleData = yield scraper.GetData(href, id);
+                            // If a article has been updated we replace article here
+                            if (scrapeOrupdate[1] == true) {
+                                dataObj = scraper.Update(articleData, dataObj);
                             }
                             else {
                                 try {
-                                    dataobj.push(articledata);
+                                    // Here we push new data to the object
+                                    dataObj.push(articleData);
                                 }
                                 catch (e) {
                                     console.log("NO ARTICLE FOUND");
@@ -91,12 +100,14 @@ class Main {
                         }
                     }
                 }
-                let jsonData = JSON.stringify(dataobj);
+                // Here we store the data to the selected location
+                let jsonData = JSON.stringify(dataObj);
                 fs.writeFile(`data/baseline.json`, jsonData, function (err) {
                     if (err) {
                         console.log(err);
                     }
                 });
+                // Start the Timer
                 console.log("ALL DONE");
                 const timer = new Timer(Varobj.IdleTimeMin);
                 console.log("Waiting...");
@@ -111,6 +122,7 @@ function delay(ms) {
         return yield new Promise(resolve => setTimeout(resolve, ms));
     });
 }
+// This function starts the process
 function Run() {
     return __awaiter(this, void 0, void 0, function* () {
         const start = new Main();

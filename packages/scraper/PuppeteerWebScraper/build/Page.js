@@ -14,7 +14,7 @@ export class Page {
         this.page = p;
     }
     ;
-    LoadPage(visible) {
+    LoadPage() {
         return __awaiter(this, void 0, void 0, function* () {
             const Var = fs.readFileSync(`src/config.json`, 'utf8');
             const Varobj = JSON.parse(Var);
@@ -48,10 +48,10 @@ export class Page {
                 return visible;
             });
             const selectorForLoadMoreButton = Varobj.LoadMoreButton;
-            let numberofloadmoreclicks = 0;
+            let numberofLoadmoreClicks = 0;
             let loadMoreVisible = yield isElementVisible(this.page, selectorForLoadMoreButton);
-            while (loadMoreVisible && numberofloadmoreclicks < 1) {
-                numberofloadmoreclicks++;
+            while (loadMoreVisible && numberofLoadmoreClicks < 1) {
+                numberofLoadmoreClicks++;
                 yield this.page
                     .click(selectorForLoadMoreButton)
                     .catch(() => { });
@@ -62,9 +62,9 @@ export class Page {
     }
     Collect() {
         return __awaiter(this, void 0, void 0, function* () {
-            const hrefs1 = yield this.page.evaluate(() => Array.from(document.querySelectorAll('[class="list list--thumb list--wide"] [data-type="article"]'), a => a.getAttribute('href')));
-            console.log(`${hrefs1.length - 1} articles found...`);
-            return hrefs1;
+            const Hrefs = yield this.page.evaluate(() => Array.from(document.querySelectorAll('[class="list list--thumb list--wide"] [data-type="article"]'), a => a.getAttribute('href')));
+            console.log(`${Hrefs.length - 1} articles found...`);
+            return Hrefs;
         });
     }
     GetId(href) {
@@ -79,9 +79,9 @@ export class Page {
             try {
                 const TimeSelector = Varobj.TimeSelector;
                 yield this.page.waitForSelector(TimeSelector, { timeout: 2000 });
-                let Time = yield this.page.$(TimeSelector);
-                let TimeUpdate = yield this.page.evaluate(el => el.innerText, Time);
-                IdTime = this.TimeConverter(TimeUpdate);
+                let time = yield this.page.$(TimeSelector);
+                let timeUpdate = yield this.page.evaluate(el => el.innerText, time);
+                IdTime = this.TimeConverter(timeUpdate);
             }
             catch (e) {
                 IdTime = date.toString();
@@ -89,8 +89,8 @@ export class Page {
             try {
                 const TitleSelector = Varobj.TitleSelector;
                 yield this.page.waitForSelector(TitleSelector, { timeout: 2000 });
-                let Title = yield this.page.$(TitleSelector);
-                IdTitle = yield this.page.evaluate(el => el.innerText, Title);
+                let title = yield this.page.$(TitleSelector);
+                IdTitle = yield this.page.evaluate(el => el.innerText, title);
             }
             catch (e) {
                 IdTitle = "NO TITLE FOUND";
@@ -104,63 +104,62 @@ export class Page {
             const Var = fs.readFileSync(`src/config.json`, 'utf8');
             const Varobj = JSON.parse(Var);
             console.log(`Extracting from: ${href}`);
-            var data = Array();
             const pagelink = 'https://www.nu.nl' + href;
             yield this.page.goto(pagelink);
-            let Articleval;
-            let Timeval;
-            let Titleval;
-            let Authorval;
+            let articleVal;
+            let timeVal;
+            let titleVal;
+            let authorVal;
             try {
                 const ArticleContentSelector = Varobj.ArticleContentSelector;
                 yield this.page.waitForSelector(ArticleContentSelector, { timeout: 2000 });
                 console.log("ARTICLE FOUND");
-                let Article = yield this.page.$(ArticleContentSelector);
-                Articleval = yield this.page.evaluate(el => el.innerText, Article);
+                let article = yield this.page.$(ArticleContentSelector);
+                articleVal = yield this.page.evaluate(el => el.innerText, article);
             }
             catch (e) {
-                Articleval = "NO ARTICLE FOUND";
+                articleVal = "NO ARTICLE FOUND";
             }
             try {
                 const TimeSelector = Varobj.TimeSelector;
                 yield this.page.waitForSelector(TimeSelector, { timeout: 2000 });
                 console.log("TIME FOUND");
-                let Time = yield this.page.$(TimeSelector);
-                let TimeUpdate = yield this.page.evaluate(el => el.innerText, Time);
-                Timeval = this.TimeConverter(TimeUpdate);
+                let time = yield this.page.$(TimeSelector);
+                let timeUpdate = yield this.page.evaluate(el => el.innerText, time);
+                timeVal = this.TimeConverter(timeUpdate);
             }
             catch (e) {
-                Timeval = "NO TIME FOUND";
+                timeVal = "NO TIME FOUND";
             }
             try {
                 const TitleSelector = Varobj.TitleSelector;
                 yield this.page.waitForSelector(TitleSelector, { timeout: 2000 });
                 console.log("TITLE FOUND");
-                let Title = yield this.page.$(TitleSelector);
-                Titleval = yield this.page.evaluate(el => el.innerText, Title);
+                let title = yield this.page.$(TitleSelector);
+                titleVal = yield this.page.evaluate(el => el.innerText, title);
             }
             catch (e) {
-                Titleval = "NO TITLE FOUND";
+                titleVal = "NO TITLE FOUND";
             }
             try {
                 const AuthorSelector = Varobj.AuthorSelector;
                 yield this.page.waitForSelector(AuthorSelector, { timeout: 2000 });
                 console.log("AUTHOR FOUND");
-                let Author = yield this.page.$(AuthorSelector);
-                Authorval = yield this.page.evaluate(el => el.innerText, Author);
+                let author = yield this.page.$(AuthorSelector);
+                authorVal = yield this.page.evaluate(el => el.innerText, author);
             }
             catch (e) {
-                Authorval = "NO AUTHOR FOUND";
+                authorVal = "NO AUTHOR FOUND";
             }
-            let stringdata = JSON.stringify({ Id: id, link: pagelink, title: Titleval, author: Authorval, date: Timeval, content: Articleval });
-            let completedata = JSON.parse(stringdata);
-            return completedata;
+            let stringData = JSON.stringify({ Id: id, link: pagelink, title: titleVal, author: authorVal, date: timeVal, content: articleVal });
+            let completeData = JSON.parse(stringData);
+            return completeData;
         });
     }
     Update(data, obj) {
-        let Item = obj.findIndex(a => a.link == data.link);
-        obj[Item] = data;
-        console.log(`this item has been updated: ${obj[Item].link}`);
+        let item = obj.findIndex(a => a.link == data.link);
+        obj[item] = data;
+        console.log(`this item has been updated: ${obj[item].link}`);
         return obj;
     }
     DeleteOldData(Obj) {
@@ -176,13 +175,13 @@ export class Page {
         }
         return Obj;
     }
+    // Here we turn a text to a date we use to determine the last update
     TimeConverter(Time) {
         let re = /(?<CompleteTime>(?<TimeVal>[0-9]+|een)\s(?<TimeUnit>dagen|uur|dag|minuten|minuut))|(?<CompleteDate>(?<DateDate>[0-9]+)-(?<DateMonth>[0-9]+)-(?<DateYear>[0-9]+)\s(?<DateHour>[0-9]+):(?<DateMinute>[0-9]+))/g;
-        const TimeMatch = Time.match(re);
-        let TimeGroups = Time.matchAll(re);
+        const timeMatch = Time.match(re);
         let Today = new Date();
         try {
-            TimeMatch === null || TimeMatch === void 0 ? void 0 : TimeMatch.forEach(element => {
+            timeMatch === null || timeMatch === void 0 ? void 0 : timeMatch.forEach(element => {
                 const DayConditions = ["dagen", "dag"];
                 const HourConditions = ["uur"];
                 const MinuteConditions = ["minuut", "minuten"];

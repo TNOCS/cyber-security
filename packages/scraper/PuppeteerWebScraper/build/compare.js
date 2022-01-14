@@ -1,23 +1,23 @@
 import fs from "fs";
 export class Compare {
     CompareId(id) {
-        let canscrape = true;
+        let canScrape = true;
         let isUpdated = false;
-        const Idtitle = id.split("/^/")[0];
-        const Iddate = id.split("/^/")[1];
+        const IdTitle = id.split("/^/")[0];
+        const IdDate = id.split("/^/")[1];
         let data = fs.readFileSync(`data/baseline.json`, 'utf8');
         let obj = JSON.parse(data);
-        let containTitle = obj.filter(a => a.title == Idtitle);
+        let containTitle = obj.filter(a => a.title == IdTitle);
         if (containTitle.length > 0) {
-            isUpdated = this.Updated(containTitle[0].date, Iddate);
+            isUpdated = this.Updated(containTitle[0].date, IdDate);
             if (!isUpdated) {
-                canscrape = false;
+                canScrape = false;
             }
         }
         else {
-            return [canscrape = true, isUpdated];
+            return [canScrape = true, isUpdated];
         }
-        return [canscrape, isUpdated];
+        return [canScrape, isUpdated];
     }
     Updated(olddate, newdate) {
         let isUpdated = false;

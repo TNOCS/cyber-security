@@ -1,6 +1,4 @@
-import { TIMEOUT } from 'dns';
 import puppeteer from 'puppeteer';
-import { text } from 'stream/consumers';
 import { IArticle } from './iarticle';
 import { IConfig } from './iconfig';
 import fs from "fs";
@@ -19,7 +17,7 @@ export class Page{
 
     
 
-    public async LoadPage(visible : boolean) : Promise<void>{
+    public async LoadPage() : Promise<void>{
 
         const Var = fs.readFileSync(`src/config.json`, 'utf8');
         const Varobj:IConfig = JSON.parse(Var);
@@ -29,9 +27,6 @@ export class Page{
 
         await this.page.goto(Varobj.Webpage);
 
-
-       
-
         await delay(2000);
 
         try{
@@ -39,6 +34,7 @@ export class Page{
             await this.page.waitForSelector(PopupSelector, {timeout: 5000});
             await delay(2000);
             await this.page.click(PopupSelector);
+
         } catch(e){
             return;
         }
@@ -66,13 +62,13 @@ export class Page{
     
         const selectorForLoadMoreButton = Varobj.LoadMoreButton;
     
-        let numberofloadmoreclicks = 0;
+        let numberofLoadmoreClicks = 0;
           
         let loadMoreVisible = await isElementVisible(this.page, selectorForLoadMoreButton);
     
           
-        while (loadMoreVisible && numberofloadmoreclicks < 1) {
-            numberofloadmoreclicks++;
+        while (loadMoreVisible && numberofLoadmoreClicks < 1) {
+            numberofLoadmoreClicks++;
             await this.page
                 .click(selectorForLoadMoreButton)
                 .catch(() => {});
@@ -85,18 +81,18 @@ export class Page{
 
     public async Collect(): Promise<(string| null)[]>{
 
-        const hrefs1 = await this.page.evaluate(
+        const Hrefs = await this.page.evaluate(
             () => Array.from(
               document.querySelectorAll('[class="list list--thumb list--wide"] [data-type="article"]'),
               a => a.getAttribute('href')
             )
         );
         
-        console.log(`${hrefs1.length-1} articles found...`);
+        console.log(`${Hrefs.length-1} articles found...`);
 
 
 
-        return hrefs1;
+        return Hrefs;
         
     }
 
@@ -120,9 +116,9 @@ export class Page{
             const TimeSelector = Varobj.TimeSelector;
             await this.page.waitForSelector(TimeSelector, {timeout: 2000});
 
-            let Time = await this.page.$(TimeSelector);
-            let TimeUpdate = await this.page.evaluate(el => el.innerText, Time);
-            IdTime = this.TimeConverter(TimeUpdate);
+            let time = await this.page.$(TimeSelector);
+            let timeUpdate = await this.page.evaluate(el => el.innerText, time);
+            IdTime = this.TimeConverter(timeUpdate);
         } catch (e){
             IdTime = date.toString();
         }
@@ -131,9 +127,9 @@ export class Page{
             const TitleSelector = Varobj.TitleSelector;
             await this.page.waitForSelector(TitleSelector, {timeout: 2000});
 
-            let Title = await this.page.$(TitleSelector);
+            let title = await this.page.$(TitleSelector);
 
-            IdTitle= await this.page.evaluate(el => el.innerText, Title);
+            IdTitle= await this.page.evaluate(el => el.innerText, title);
 
         } catch (e){
             IdTitle = "NO TITLE FOUND";
@@ -153,17 +149,15 @@ export class Page{
 
         console.log(`Extracting from: ${href}`);
 
-        var data = Array();
-
         const pagelink = 'https://www.nu.nl'+href;
 
         await this.page.goto(pagelink);
         
         
-        let Articleval : string;
-        let Timeval : string;
-        let Titleval : string;
-        let Authorval : string;
+        let articleVal : string;
+        let timeVal : string;
+        let titleVal : string;
+        let authorVal : string;
 
 
         try{
@@ -171,12 +165,12 @@ export class Page{
             await this.page.waitForSelector(ArticleContentSelector, {timeout: 2000});
             console.log("ARTICLE FOUND");
 
-            let Article = await this.page.$(ArticleContentSelector);
-            Articleval = await this.page.evaluate(el => el.innerText, Article);
+            let article = await this.page.$(ArticleContentSelector);
+            articleVal = await this.page.evaluate(el => el.innerText, article);
             
 
         } catch (e){
-            Articleval = "NO ARTICLE FOUND";
+            articleVal = "NO ARTICLE FOUND";
         }
 
 
@@ -185,11 +179,11 @@ export class Page{
             await this.page.waitForSelector(TimeSelector, {timeout: 2000});
             console.log("TIME FOUND");
 
-            let Time = await this.page.$(TimeSelector);
-            let TimeUpdate = await this.page.evaluate(el => el.innerText, Time);
-            Timeval = this.TimeConverter(TimeUpdate);
+            let time = await this.page.$(TimeSelector);
+            let timeUpdate = await this.page.evaluate(el => el.innerText, time);
+            timeVal = this.TimeConverter(timeUpdate);
         } catch (e){
-            Timeval = "NO TIME FOUND";
+            timeVal = "NO TIME FOUND";
         }
 
 
@@ -200,12 +194,12 @@ export class Page{
             await this.page.waitForSelector(TitleSelector, {timeout: 2000});
             console.log("TITLE FOUND");
 
-            let Title = await this.page.$(TitleSelector);
+            let title = await this.page.$(TitleSelector);
 
-            Titleval= await this.page.evaluate(el => el.innerText, Title);
+            titleVal= await this.page.evaluate(el => el.innerText, title);
 
         } catch (e){
-            Titleval = "NO TITLE FOUND";
+            titleVal = "NO TITLE FOUND";
         }
 
 
@@ -214,28 +208,28 @@ export class Page{
             await this.page.waitForSelector(AuthorSelector, {timeout: 2000});
             console.log("AUTHOR FOUND");
 
-            let Author = await this.page.$(AuthorSelector);
-            Authorval = await this.page.evaluate(el => el.innerText, Author);
+            let author = await this.page.$(AuthorSelector);
+            authorVal = await this.page.evaluate(el => el.innerText, author);
 
         } catch(e){
-            Authorval = "NO AUTHOR FOUND"
+            authorVal = "NO AUTHOR FOUND"
         }
         
     
-        let stringdata = JSON.stringify({Id: id,link: pagelink,title: Titleval, author: Authorval, date: Timeval, content: Articleval});
-        let completedata: IArticle = JSON.parse(stringdata);
+        let stringData = JSON.stringify({Id: id,link: pagelink,title: titleVal, author: authorVal, date: timeVal, content: articleVal});
+        let completeData: IArticle = JSON.parse(stringData);
 
-        return completedata;
+        return completeData;
 
     }
 
     public Update(data: IArticle, obj : IArticle[]){
 
-        let Item = obj.findIndex(a => a.link == data.link);
+        let item = obj.findIndex(a => a.link == data.link);
 
-        obj[Item] = data
+        obj[item] = data
 
-        console.log(`this item has been updated: ${obj[Item].link}`);
+        console.log(`this item has been updated: ${obj[item].link}`);
 
         return obj;
     } 
@@ -260,19 +254,20 @@ export class Page{
         
     }
 
+
+    // Here we turn a text to a date we use to determine the last update
     public TimeConverter(Time: string){
 
 
         let re = /(?<CompleteTime>(?<TimeVal>[0-9]+|een)\s(?<TimeUnit>dagen|uur|dag|minuten|minuut))|(?<CompleteDate>(?<DateDate>[0-9]+)-(?<DateMonth>[0-9]+)-(?<DateYear>[0-9]+)\s(?<DateHour>[0-9]+):(?<DateMinute>[0-9]+))/g
         
 
-        const TimeMatch = Time.match(re);
-        let TimeGroups = Time.matchAll(re);
+        const timeMatch = Time.match(re);
 
         let Today = new Date();
 
             try {
-                TimeMatch?.forEach(element => {
+                timeMatch?.forEach(element => {
 
                     const DayConditions = ["dagen", "dag"];
                     const HourConditions = ["uur"];

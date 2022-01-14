@@ -12,4 +12,10 @@ When running:
 
 -- To stop the automated process type Ctrl+c, then Yes
 
+-- data will be saved to data/baseline.json
+
 ```
+
+the config.json file in src/config.json. This file contains variables used to select elements on the webpage.
+
+there is also a "IdleTimeMin" that allows the user to decide how many minutes the program waits before scraping again.

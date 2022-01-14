@@ -4,7 +4,7 @@ export declare class Page {
     browser: puppeteer.Browser;
     page: puppeteer.Page;
     constructor(b: puppeteer.Browser, p: puppeteer.Page);
-    LoadPage(visible: boolean): Promise<void>;
+    LoadPage(): Promise<void>;
     LoadArticles(): Promise<void>;
     Collect(): Promise<(string | null)[]>;
     GetId(href: (string | null)): Promise<(string)>;
