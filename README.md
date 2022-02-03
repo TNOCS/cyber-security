@@ -14,8 +14,8 @@ The scraper can be used for different sections of nu.nl but must be altered if u
 Simple instructions (refer to README.MD for detailed instructions):
 
 ```bash
-npm i      		#	to install dependencies 
-npm start 	  # to start compile (in watch mode)
+npm i         #	to install dependencies 
+npm start     # to start compile (in watch mode)
 npm run node  # to run
 ```
 
