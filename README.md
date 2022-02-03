@@ -12,16 +12,17 @@ Using the config.json file you can change selectors and set the timer for the sc
 The scraper can be used for different sections of nu.nl but must be altered if used with different news sites.
 
 Simple instructions (refer to README.MD for detailed instructions):
-**npm i** 		=	to install dependencies 
-**npm start** 	=	to start compile (in watch mode)
-**npm run node** 	=	to run
+
+```bash
+npm i      		#	to install dependencies 
+npm start 	  # to start compile (in watch mode)
+npm run node  # to run
+```
 
 **When running:**
--- You must accept the Cookie notification on screen manually 
-
--- To stop the automated process type Ctrl+c, then Yes (Y)
-
--- data will be saved to data/baseline.json
+- You must accept the Cookie notification on screen manually 
+- To stop the automated process type Ctrl+c, then Yes (Y)
+- data will be saved to data/baseline.json
 
 The config.json file in src/config.json. This file contains variables used to select elements on the webpage.
 
