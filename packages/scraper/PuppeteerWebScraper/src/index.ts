@@ -25,7 +25,7 @@ class Main{
     
 
     // The browser is started and a new page is opened.
-    public async Setup(): Promise<[puppeteer.Browser, puppeteer.Page]>{
+    public async setup(): Promise<[puppeteer.Browser, puppeteer.Page]>{
       const browser = await puppeteer.launch({headless:false, args: [
         '--disable-web-security',
         '--disable-features=IsolateOrigins,site-per-process'
@@ -37,19 +37,19 @@ class Main{
     }
 
     // This is the main scrape function
-    public async Scrape(browser: puppeteer.Browser, page: puppeteer.Page) {   
+    public async scrape(browser: puppeteer.Browser, page: puppeteer.Page) {   
       
 
-      const Var = fs.readFileSync(`src/config.json`, 'utf8');
-      const Varobj:IConfig = JSON.parse(Var);
+      const readFile = fs.readFileSync(`src/config.json`, 'utf8');
+      const varObj:IConfig = JSON.parse(readFile);
       
-      const path = Varobj.PathToDataFile;
+      const path = varObj.pathToDataFile;
 
       const scraper = new Page(browser,page);
 
       const compare = new Compare();
 
-      let scrapeOrupdate = [true, false];
+      let scrapeOrUpdate = [true, false];
 
       // This loop runs forever. Or until the user stops the program (ctrl+c)
       for (let index = 0; index < 1;) {
@@ -59,21 +59,21 @@ class Main{
         if (fs.existsSync(path)){
           let data = fs.readFileSync(`data/baseline.json`, 'utf8');
           dataObj = JSON.parse(data);
-          dataObj = scraper.DeleteOldData(dataObj);
+          dataObj = scraper.deleteOldData(dataObj);
         }
         
         // This loads the correct news site
-        await scraper.LoadPage();
+        await scraper.loadPage();
     
         console.log("Page is loaded");
 
         // This loads all the articles on the webpage
-        await scraper.LoadArticles();
+        await scraper.loadArticles();
     
         console.log("Articles are loaded");
     
         // This collects all the links from all the articles on the webpage
-        const allHrefs = await scraper.Collect();
+        const allHrefs = await scraper.collect();
 
         console.log("Hrefs are collected");
     
@@ -82,25 +82,25 @@ class Main{
           for(let i=0; i < allHrefs.length; i++){
 
             let href = allHrefs[i];
-            let id = await scraper.GetId(href);
+            let id = await scraper.getId(href);
 
 
             console.log("[Id]: Id is collected");
 
 
-            if (!fs.existsSync(path)){scrapeOrupdate[0] = true}
+            if (!fs.existsSync(path)){scrapeOrUpdate[0] = true}
 
             // This checks if a link should be scraped or not (new or old data)
-            else{ scrapeOrupdate = compare.CompareId(id);}
+            else{ scrapeOrUpdate = compare.compareId(id);}
 
-              if (scrapeOrupdate[0] == true){
+              if (scrapeOrUpdate[0] == true){
 
                 // This is the function that collects the data from a article 
-                let articleData:IArticle = await scraper.GetData(href, id);
+                let articleData:IArticle = await scraper.getData(href, id);
 
                 // If a article has been updated we replace article here
-                if (scrapeOrupdate[1] == true){
-                  dataObj = scraper.Update(articleData, dataObj);
+                if (scrapeOrUpdate[1] == true){
+                  dataObj = scraper.update(articleData, dataObj);
                     
                 } else{
 
@@ -132,7 +132,7 @@ class Main{
 
     // Start the Timer
     console.log("ALL DONE");
-    const timer = new Timer(Varobj.IdleTimeMin);
+    const timer = new Timer(varObj.idleTimeMin);
     console.log("Waiting...");
     await timer.doTimer();
 
@@ -145,14 +145,14 @@ async function delay(ms: number) {
   return await new Promise(resolve => setTimeout(resolve, ms));
 }
 // This function starts the process
-async function Run() {
+async function run() {
   const start = new Main();
-  const [browser, page] = await start.Setup();
-  await start.Scrape(browser,page);
+  const [browser, page] = await start.setup();
+  await start.scrape(browser,page);
     
   
 }
 
-Run();
+run();
 
 

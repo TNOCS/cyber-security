@@ -4,14 +4,14 @@ import {IConfig} from "./iconfig";
 
 export class Compare{
 
-    public CompareId(id: string) : boolean[] {
+    public compareId(id: string) : boolean[] {
 
         let canScrape = true
 
         let isUpdated = false;
 
-        const IdTitle = id.split("/^/")[0];
-        const IdDate = id.split("/^/")[1];
+        const idTitle = id.split("/^/")[0];
+        const idDate = id.split("/^/")[1];
 
     
 
@@ -19,9 +19,9 @@ export class Compare{
         let obj : IArticle[]= JSON.parse(data);
 
 
-        let containTitle = obj.filter(a => a.title == IdTitle);
+        let containTitle = obj.filter(a => a.title == idTitle);
         if (containTitle.length > 0){
-            isUpdated = this.Updated(containTitle[0].date ,IdDate);
+            isUpdated = this.updated(containTitle[0].date ,idDate);
             if(!isUpdated)
             { 
                 canScrape = false; }
@@ -32,7 +32,7 @@ export class Compare{
          return [canScrape, isUpdated]
     }
 
-    public Updated(olddate: string, newdate: string): boolean{
+    public updated(olddate: string, newdate: string): boolean{
         let isUpdated = false;
         
         let oldDate = new Date(olddate);

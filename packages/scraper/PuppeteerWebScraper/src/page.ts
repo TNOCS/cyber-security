@@ -17,23 +17,23 @@ export class Page{
 
     
 
-    public async LoadPage() : Promise<void>{
+    public async loadPage() : Promise<void>{
 
-        const Var = fs.readFileSync(`src/config.json`, 'utf8');
-        const Varobj:IConfig = JSON.parse(Var);
+        const readFile = fs.readFileSync(`src/config.json`, 'utf8');
+        const varObj:IConfig = JSON.parse(readFile);
 
         const delay = ( ms: any) => new Promise(res => setTimeout(res, ms));
 
 
-        await this.page.goto(Varobj.Webpage);
+        await this.page.goto(varObj.webpage);
 
         await delay(2000);
 
         try{
-            const PopupSelector = Varobj.PopupSelector;
-            await this.page.waitForSelector(PopupSelector, {timeout: 5000});
+            const popupSelector = varObj.popupSelector;
+            await this.page.waitForSelector(popupSelector, {timeout: 5000});
             await delay(2000);
-            await this.page.click(PopupSelector);
+            await this.page.click(popupSelector);
 
         } catch(e){
             return;
@@ -43,10 +43,10 @@ export class Page{
 
     }
 
-    public async LoadArticles(): Promise<void>{
+    public async loadArticles(): Promise<void>{
 
-        const Var = fs.readFileSync(`src/config.json`, 'utf8');
-        const Varobj:IConfig = JSON.parse(Var);
+        const readFile = fs.readFileSync(`src/config.json`, 'utf8');
+        const varObj:IConfig = JSON.parse(readFile);
 
         const delay = ( ms: any) => new Promise(res => setTimeout(res, ms));
         
@@ -60,15 +60,15 @@ export class Page{
             return visible;
             };
     
-        const selectorForLoadMoreButton = Varobj.LoadMoreButton;
+        const selectorForLoadMoreButton = varObj.loadMoreButton;
     
-        let numberofLoadmoreClicks = 0;
+        let numberOfLoadmoreClicks = 0;
           
         let loadMoreVisible = await isElementVisible(this.page, selectorForLoadMoreButton);
     
           
-        while (loadMoreVisible && numberofLoadmoreClicks < 1) {
-            numberofLoadmoreClicks++;
+        while (loadMoreVisible && numberOfLoadmoreClicks < 1) {
+            numberOfLoadmoreClicks++;
             await this.page
                 .click(selectorForLoadMoreButton)
                 .catch(() => {});
@@ -79,33 +79,32 @@ export class Page{
         
     }
 
-    public async Collect(): Promise<(string| null)[]>{
+    public async collect(): Promise<(string| null)[]>{
 
-        const Hrefs = await this.page.evaluate(
+        const hrefs = await this.page.evaluate(
             () => Array.from(
               document.querySelectorAll('[class="list list--thumb list--wide"] [data-type="article"]'),
               a => a.getAttribute('href')
             )
         );
         
-        console.log(`${Hrefs.length-1} articles found...`);
+        console.log(`${hrefs.length-1} articles found...`);
 
 
 
-        return Hrefs;
+        return hrefs;
         
     }
 
+    public async getId(href: (string | null)): Promise<(string)>{
 
-    public async GetId(href: (string | null)): Promise<(string)>{
-
-        const Var = fs.readFileSync(`src/config.json`, 'utf8');
-        const Varobj:IConfig = JSON.parse(Var);
+        const readFile = fs.readFileSync(`src/config.json`, 'utf8');
+        const varObj:IConfig = JSON.parse(readFile);
         
         const page = 'https://www.nu.nl'+href;
 
-        let IdTime
-        let IdTitle
+        let idTime
+        let idTitle
 
         let date = new Date();
 
@@ -113,45 +112,44 @@ export class Page{
 
         try{
             
-            const TimeSelector = Varobj.TimeSelector;
-            await this.page.waitForSelector(TimeSelector, {timeout: 2000});
+            const timeSelector = varObj.timeSelector;
+            await this.page.waitForSelector(timeSelector, {timeout: 2000});
 
-            let time = await this.page.$(TimeSelector);
+            let time = await this.page.$(timeSelector);
             let timeUpdate = await this.page.evaluate(el => el.innerText, time);
-            IdTime = this.TimeConverter(timeUpdate);
+            idTime = this.timeConverter(timeUpdate);
         } catch (e){
-            IdTime = date.toString();
+            idTime = date.toString();
         }
 
         try {     
-            const TitleSelector = Varobj.TitleSelector;
-            await this.page.waitForSelector(TitleSelector, {timeout: 2000});
+            const titleSelector = varObj.titleSelector;
+            await this.page.waitForSelector(titleSelector, {timeout: 2000});
 
-            let title = await this.page.$(TitleSelector);
+            let title = await this.page.$(titleSelector);
 
-            IdTitle= await this.page.evaluate(el => el.innerText, title);
+            idTitle= await this.page.evaluate(el => el.innerText, title);
 
         } catch (e){
-            IdTitle = "NO TITLE FOUND";
+            idTitle = "NO TITLE FOUND";
         }
 
-        const id = IdTitle+"/^/"+IdTime;
+        const id = idTitle+"/^/"+idTime;
 
         
         return id
     }
 
+    public async getData(href : string | null, id : string): Promise<IArticle>{
 
-    public async GetData(href : string | null, id : string): Promise<IArticle>{
-
-        const Var = fs.readFileSync(`src/config.json`, 'utf8');
-        const Varobj:IConfig = JSON.parse(Var);
+        const readFile = fs.readFileSync(`src/config.json`, 'utf8');
+        const varObj:IConfig = JSON.parse(readFile);
 
         console.log(`Extracting from: ${href}`);
 
-        const pagelink = 'https://www.nu.nl'+href;
+        const pageLink = 'https://www.nu.nl'+href;
 
-        await this.page.goto(pagelink);
+        await this.page.goto(pageLink);
         
         
         let articleVal : string;
@@ -161,11 +159,11 @@ export class Page{
 
 
         try{
-            const ArticleContentSelector = Varobj.ArticleContentSelector;
-            await this.page.waitForSelector(ArticleContentSelector, {timeout: 2000});
+            const articleContentSelector = varObj.articleContentSelector;
+            await this.page.waitForSelector(articleContentSelector, {timeout: 2000});
             console.log("ARTICLE FOUND");
 
-            let article = await this.page.$(ArticleContentSelector);
+            let article = await this.page.$(articleContentSelector);
             articleVal = await this.page.evaluate(el => el.innerText, article);
             
 
@@ -175,13 +173,13 @@ export class Page{
 
 
         try{
-            const TimeSelector = Varobj.TimeSelector
-            await this.page.waitForSelector(TimeSelector, {timeout: 2000});
+            const timeSelector = varObj.timeSelector
+            await this.page.waitForSelector(timeSelector, {timeout: 2000});
             console.log("TIME FOUND");
 
-            let time = await this.page.$(TimeSelector);
+            let time = await this.page.$(timeSelector);
             let timeUpdate = await this.page.evaluate(el => el.innerText, time);
-            timeVal = this.TimeConverter(timeUpdate);
+            timeVal = this.timeConverter(timeUpdate);
         } catch (e){
             timeVal = "NO TIME FOUND";
         }
@@ -190,11 +188,11 @@ export class Page{
 
 
         try {
-            const TitleSelector = Varobj.TitleSelector
-            await this.page.waitForSelector(TitleSelector, {timeout: 2000});
+            const titleSelector = varObj.titleSelector
+            await this.page.waitForSelector(titleSelector, {timeout: 2000});
             console.log("TITLE FOUND");
 
-            let title = await this.page.$(TitleSelector);
+            let title = await this.page.$(titleSelector);
 
             titleVal= await this.page.evaluate(el => el.innerText, title);
 
@@ -204,11 +202,11 @@ export class Page{
 
 
         try{
-            const AuthorSelector = Varobj.AuthorSelector
-            await this.page.waitForSelector(AuthorSelector, {timeout: 2000});
+            const authorSelector = varObj.authorSelector
+            await this.page.waitForSelector(authorSelector, {timeout: 2000});
             console.log("AUTHOR FOUND");
 
-            let author = await this.page.$(AuthorSelector);
+            let author = await this.page.$(authorSelector);
             authorVal = await this.page.evaluate(el => el.innerText, author);
 
         } catch(e){
@@ -216,14 +214,14 @@ export class Page{
         }
         
     
-        let stringData = JSON.stringify({Id: id,link: pagelink,title: titleVal, author: authorVal, date: timeVal, content: articleVal});
+        let stringData = JSON.stringify({Id: id,link: pageLink,title: titleVal, author: authorVal, date: timeVal, content: articleVal});
         let completeData: IArticle = JSON.parse(stringData);
 
         return completeData;
 
     }
 
-    public Update(data: IArticle, obj : IArticle[]){
+    public update(data: IArticle, obj : IArticle[]){
 
         let item = obj.findIndex(a => a.link == data.link);
 
@@ -234,7 +232,7 @@ export class Page{
         return obj;
     } 
 
-    public DeleteOldData(Obj:IArticle[]){
+    public deleteOldData(Obj:IArticle[]){
 
         for (let index = 0; index < Obj.length; index++) {
             const element = Obj[index];
@@ -256,89 +254,89 @@ export class Page{
 
 
     // Here we turn a text to a date we use to determine the last update
-    public TimeConverter(Time: string){
+    public timeConverter(time: string){
 
 
-        let re = /(?<CompleteTime>(?<TimeVal>[0-9]+|een)\s(?<TimeUnit>dagen|uur|dag|minuten|minuut))|(?<CompleteDate>(?<DateDate>[0-9]+)-(?<DateMonth>[0-9]+)-(?<DateYear>[0-9]+)\s(?<DateHour>[0-9]+):(?<DateMinute>[0-9]+))/g
+        let re = /(?<completeTime>(?<timeVal>[0-9]+|een)\s(?<timeUnit>dagen|uur|dag|minuten|minuut))|(?<completeDate>(?<dateDate>[0-9]+)-(?<dateMonth>[0-9]+)-(?<dateYear>[0-9]+)\s(?<dateHour>[0-9]+):(?<dateMinute>[0-9]+))/g
         
 
-        const timeMatch = Time.match(re);
+        const timeMatch = time.match(re);
 
-        let Today = new Date();
+        let today = new Date();
 
             try {
                 timeMatch?.forEach(element => {
 
-                    const DayConditions = ["dagen", "dag"];
-                    const HourConditions = ["uur"];
-                    const MinuteConditions = ["minuut", "minuten"];
+                    const dayConditions = ["dagen", "dag"];
+                    const hourConditions = ["uur"];
+                    const minuteConditions = ["minuut", "minuten"];
 
-                    const FullDateConditions = ["-", ":"];
+                    const fullDateConditions = ["-", ":"];
  
-                    if (DayConditions.some(el => element.includes(el))) {
-                        let SplitDay = element.split(" ");
+                    if (dayConditions.some(el => element.includes(el))) {
+                        let splitDay = element.split(" ");
                         
-                        let ValueDay = parseInt(SplitDay[0]);                  
+                        let valueDay = parseInt(splitDay[0]);                  
 
 
-                        Today.setDate(Today.getDate() - ValueDay);
+                        today.setDate(today.getDate() - valueDay);
                     }
 
-                    else if (HourConditions.some(el => element.includes(el))) {
-                        let SplitHour = element.split(" ");
-                        let ValueHour = 0;
+                    else if (hourConditions.some(el => element.includes(el))) {
+                        let splitHour = element.split(" ");
+                        let valueHour = 0;
 
-                        if (SplitHour[0] == "een"){
-                            ValueHour = 1;
+                        if (splitHour[0] == "een"){
+                            valueHour = 1;
                         }else{
-                            ValueHour = parseInt(SplitHour[0]);
+                            valueHour = parseInt(splitHour[0]);
                         }
                         
 
-                        Today.setHours(Today.getHours() - ValueHour);
+                        today.setHours(today.getHours() - valueHour);
                     }
 
-                    else if (MinuteConditions.some(el => element.includes(el))){
-                        let SplitMinute = element.split(" ");
+                    else if (minuteConditions.some(el => element.includes(el))){
+                        let splitMinute = element.split(" ");
 
-                        let ValueMinute = parseInt(SplitMinute[0]);  
+                        let valueMinute = parseInt(splitMinute[0]);  
 
-                        Today.setMinutes(Today.getMinutes() - ValueMinute);
+                        today.setMinutes(today.getMinutes() - valueMinute);
                     }
 
-                    else if (FullDateConditions.some(el => element.includes(el))){
-                        let SplitDatetime = element.split(" ");
-                        let SplitDate = SplitDatetime[0].split("-");
-                        let SplitTime = SplitDatetime[1].split(":");
+                    else if (fullDateConditions.some(el => element.includes(el))){
+                        let splitDatetime = element.split(" ");
+                        let splitDate = splitDatetime[0].split("-");
+                        let splitTime = splitDatetime[1].split(":");
           
-                        SplitDate.forEach(element => {
-                            let ValueDate = parseInt(element);
-                            let indexDate = SplitDate.indexOf(element);
+                        splitDate.forEach(element => {
+                            let valueDate = parseInt(element);
+                            let indexDate = splitDate.indexOf(element);
                             
 
                             if (indexDate == 0){
-                                Today.setDate(ValueDate);
-                                console.log(`added date: ${Today.toString()}` );      
+                                today.setDate(valueDate);
+                                console.log(`added date: ${today.toString()}` );      
                             }else if (indexDate == 1){
-                                Today.setMonth(ValueDate-1);
-                                console.log(`added month: ${Today.toString()}` );
+                                today.setMonth(valueDate-1);
+                                console.log(`added month: ${today.toString()}` );
                             }else if (indexDate == 2){
-                                Today.setFullYear(2000+ValueDate);
-                                console.log(`added year: ${Today.toString()}` );
+                                today.setFullYear(2000+valueDate);
+                                console.log(`added year: ${today.toString()}` );
                             }
                         });
 
 
-                        SplitTime.forEach(el => {
-                            let ValueTime = parseInt(el);
-                            let indexTime = SplitTime.indexOf(el);
+                        splitTime.forEach(el => {
+                            let valueTime = parseInt(el);
+                            let indexTime = splitTime.indexOf(el);
                             
                             if (indexTime == 0){
-                                Today.setHours(ValueTime);
-                                console.log(`added hour: ${Today.toString()}` );
+                                today.setHours(valueTime);
+                                console.log(`added hour: ${today.toString()}` );
                             }if (indexTime == 1){
-                                Today.setMinutes(ValueTime);
-                                console.log(`added minutes: ${Today.toString()}` );
+                                today.setMinutes(valueTime);
+                                console.log(`added minutes: ${today.toString()}` );
                             }
                         })
 
@@ -349,12 +347,12 @@ export class Page{
                 });
             } catch(e){
                 console.log("TO TIME FOUND, USING CURRENT TIME");
-                Today.setSeconds(0);
-                return Today.toString();
+                today.setSeconds(0);
+                return today.toString();
             }
         
-        Today.setSeconds(0);
-        return Today.toString();
+            today.setSeconds(0);
+        return today.toString();
 
     } 
 }
